@@ -1,0 +1,165 @@
+{
+  "project_name": "PROPERLEAD",
+  "app_type": "hybrid_fullstack (Data-Dense SaaS CRM & Bank Marketing Dashboard)",
+  "language": "Indonesian",
+  "branding": {
+    "logo_concept": "House silhouette created by an emerald green roofline with a metallic gold upward-trending arrow integrated within, symbolising property growth and financial intelligence",
+    "wordmark": "PROPER (Emerald Green) LEAD (Metallic Gold)",
+    "tagline": "PROJECT & FINANCE INTELLIGENCE",
+    "theme_mode": "Clean light mode with rich dark slate structural elements and high contrast gold/emerald accents"
+  },
+  "colors": {
+    "primary_emerald": "#065F46",
+    "primary_emerald_hover": "#044E38",
+    "primary_emerald_light": "#ECFDF5",
+    "primary_emerald_border": "#A7F3D0",
+    "accent_gold": "#D97706",
+    "accent_gold_metallic": "#B45309",
+    "accent_gold_light": "#FEF3C7",
+    "accent_gold_border": "#FDE68A",
+    "background_main": "#F8FAFC",
+    "background_card": "#FFFFFF",
+    "background_sidebar": "#0F172A",
+    "text_primary": "#0F172A",
+    "text_secondary": "#475569",
+    "text_muted": "#64748B",
+    "text_inverse": "#F8FAFC",
+    "border_subtle": "#E2E8F0",
+    "border_strong": "#CBD5E1",
+    "alerts": {
+      "rdtr_baru": {
+        "label": "RDTR Baru",
+        "bg": "#DCFCE7",
+        "text": "#15803D",
+        "border": "#86EFAC",
+        "badge_color": "green",
+        "hex": "#10B981"
+      },
+      "kkpr_terbit": {
+        "label": "KKPR/PKKPR Terbit",
+        "bg": "#DBEAFE",
+        "text": "#1D4ED8",
+        "border": "#93C5FD",
+        "badge_color": "blue",
+        "hex": "#3B82F6"
+      },
+      "perubahan_status": {
+        "label": "Perubahan Status",
+        "bg": "#FFEDD5",
+        "text": "#C2410C",
+        "border": "#FDBA74",
+        "badge_color": "orange",
+        "hex": "#F97316"
+      }
+    },
+    "priority_badges": {
+      "priority_a": {
+        "label": "Prioritas A (High)",
+        "score_range": "80-100",
+        "bg": "#FEF2F2",
+        "text": "#991B1B",
+        "border": "#FECACA"
+      },
+      "priority_b": {
+        "label": "Prioritas B (Medium)",
+        "score_range": "50-79",
+        "bg": "#FEF3C7",
+        "text": "#92400E",
+        "border": "#FDE68A"
+      },
+      "priority_c": {
+        "label": "Prioritas C (Standard)",
+        "score_range": "0-49",
+        "bg": "#F1F5F9",
+        "text": "#334155",
+        "border": "#CBD5E1"
+      }
+    }
+  },
+  "typography": {
+    "font_family_heading": "'Plus Jakarta Sans', 'Outfit', sans-serif",
+    "font_family_body": "'Plus Jakarta Sans', sans-serif",
+    "font_family_mono": "'JetBrains Mono', monospace",
+    "h1": "text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900",
+    "h2": "text-xl sm:text-2xl font-bold tracking-tight text-slate-900",
+    "h3": "text-lg font-semibold text-slate-800",
+    "h4": "text-base font-semibold text-slate-800",
+    "body": "text-sm text-slate-600 leading-relaxed",
+    "caption": "text-xs font-medium text-slate-500",
+    "overline": "text-[11px] font-bold uppercase tracking-wider text-slate-400"
+  },
+  "spacing_and_layout": {
+    "container_padding": "p-4 sm:p-6 lg:p-8",
+    "gap_standard": "gap-4 sm:gap-6",
+    "border_radius": "rounded-xl",
+    "card_padding": "p-5 sm:p-6",
+    "grid_dashboard": "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6",
+    "crm_pipeline_grid": "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 overflow-x-auto pb-4"
+  },
+  "key_components_to_build": {
+    "app_header": "Top header with PROPERLEAD Logo & Wordmark, Wilayah Filter dropdown, Search lead input, In-App Notification Bell with count badge & alert drawer, and User Profile Dropdown (Super Admin / Marketing User role switcher)",
+    "sidebar_navigation": "Sticky Dark Slate sidebar (#0F172A) with items: Ringkasan Dashboard, Pipeline CRM, Daftar Lead, Proyek & Tata Ruang, Notifikasi & Alert, Manajemen User (Admin Only), and Settings",
+    "stat_cards": "4 primary stat metrics: 1. Lead Baru Hari Ini (Count + trend), 2. KKPR Terbit (Blue accent), 3. RDTR Baru (Green accent), 4. Status Berubah (Orange accent)",
+    "leads_data_table": "Interactive lead list with filtering by Wilayah (Banjarmasin, Banjarbaru, Kab. Banjar, Tanah Laut, Barito Kuala, dll) & Jenis Proyek (Perumahan Subsidi, Commercial, Kluster Mewah, Ruko). Features priority badges A/B/C, score pill (0-100), OSS milestone tag, developer name, and quick follow-up trigger button",
+    "lead_detail_modal": "Comprehensive detail view showcasing developer profile, project location map, Tata Ruang (RDTR / Zona detail), Perizinan (KKPR / PKKPR number & date), Lead Score breakdown, Activity Timeline, and CRM status action buttons",
+    "crm_kanban_board": "Interactive 6-stage drag/move CRM pipeline: NEW → SUDAH DIHUBUNGI → RESPON → MEETING → PROPOSAL → KERJASAMA with lead value estimate, developer contact, and quick status update",
+    "notifications_drawer": "Real-time alert list filtering by RDTR Baru (Hijau), KKPR Terbit (Biru), and Perubahan Status (Oranye) with direct click to open lead detail",
+    "super_admin_user_panel": "User management tab allowing Super Admin to assign roles (Super Admin vs Marketing User), edit target regions, track follow-up metrics per agent, and manage system access"
+  },
+  "image_urls": {
+    "project_previews": [
+      {
+        "url": "https://images.unsplash.com/photo-1776149421643-a1a79c5b6ae5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzd8MHwxfHNlYXJjaHw0fHxtb2Rlcm4lMjByZXNpZGVudGlhbCUyMGhvdXNpbmclMjBkZXZlbG9wbWVudCUyMGFlcmlhbCUyMHByb3BlcnR5JTIwaW5kb25lc2lhfGVufDB8fHx8MTc5MDY3NTk5MHww&ixlib=rb-4.1.0&q=85",
+        "description": "Aerial view of residential housing project in Banjarbaru",
+        "category": "project_aerial"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1558368333-a394063fbf24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjByZXNpZGVudGlhbCUyMGhvdXNpbmclMjBkZXZlbG9wbWVudCUyMGFlcmlhbCUyMHByb3BlcnR5JTIwaW5kb25lc2lhfGVufDB8fHx8MTc5MDY3NTk5MHww&ixlib=rb-4.1.0&q=85",
+        "description": "High angle view of commercial & housing lot development in Banjarmasin",
+        "category": "project_cluster"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1671342986427-b022491735c2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzd8MHwxfHNlYXJjaHwzfHxtb2Rlcm4lMjByZXNpZGVudGlhbCUyMGhvdXNpbmclMjBkZXZlbG9wbWVudCUyMGFlcmlhbCUyMHByb3BlcnR5JTIwaW5kb25lc2lhfGVufDB8fHx8MTc5MDY3NTk5MHww&ixlib=rb-4.1.0&q=85",
+        "description": "City spatial planning development area",
+        "category": "urban_planning"
+      }
+    ],
+    "avatars": [
+      {
+        "url": "https://images.unsplash.com/photo-1622902141397-a89655353bec?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzN8MHwxfHNlYXJjaHwyfHxpbmRvbmVzaWFuJTIwcHJvZmVzc2lvbmFsJTIwZXhlY3V0aXZlJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzg4NDQ5MjQ4fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Bank Marketing Executive - Super Admin Avatar",
+        "category": "user_avatar"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1626499370263-b2a0501f2773?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzN8MHwxfHNlYXJjaHw0fHxpbmRvbmVzaWFuJTIwcHJvZmVzc2lvbmFsJTIwZXhlY3V0aXZlJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzg4NDQ5MjQ4fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Marketing Lead User Avatar",
+        "category": "user_avatar"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1648448942225-7aa06c7e8f79?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzN8MHwxfHNlYXJjaHwxfHxpbmRvbmVzaWFuJTIwcHJvZmVzc2lvbmFsJTIwZXhlY3V0aXZlJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzg4NDQ5MjQ4fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Developer Relations Officer",
+        "category": "user_avatar"
+      }
+    ]
+  },
+  "motion_and_interactions": {
+    "hover_effect": "hover:-translate-y-0.5 transition-transform duration-200 ease-out hover:shadow-md",
+    "active_state": "active:scale-[0.98]",
+    "kanban_drag_animation": "framer-motion layout transition for continuous smooth position updates",
+    "notification_pulse": "animate-ping for unread high-priority RDTR/KKPR alerts"
+  },
+  "testing_and_accessibility": {
+    "data_testid_convention": "All interactive elements, buttons, inputs, tabs, filter dropdowns, badges, and modal dialogs MUST include kebab-case data-testid attributes (e.g., data-testid='filter-wilayah-select', data-testid='lead-card-1', data-testid='follow-up-button-modal', data-testid='crm-stage-meeting-column')",
+    "contrast_standards": "Ensure high contrast on text overlays (min 4.5:1 ratio). All alert badge text MUST be explicitly dark against tinted backgrounds."
+  },
+  "instructions_to_main_agent": [
+    "Use Lucide React icons for system icons (e.g. Building2, FileCheck2, MapPin, Bell, ShieldCheck, UserCheck, PhoneCall, TrendingUp, Filter, Search).",
+    "Ensure all text is in professional Indonesian suitable for a banking/finance executive environment.",
+    "Support dual role simulation (Super Admin & Marketing User) via a quick-switch toggle in the top header so reviewers can test both views seamlessly.",
+    "Implement mock interactive functionalities: Lead filtering by region/type, Lead Score breakdown modal, CRM pipeline stage updates, and in-app alert dismiss/read actions.",
+    "All interactive elements must include 'data-testid' attributes."
+  ]
+},
+overwrite: true,
+path: "/app/design_guidelines.json"
+}
