@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -114,7 +115,7 @@ export default function LeadDetailDialog({ lead, open, onOpenChange, onChanged }
             </span>
           </div>
           <DialogTitle className="text-xl">{lead.proyek?.nama}</DialogTitle>
-          <p className="text-sm text-slate-500">{lead.developer?.nama}</p>
+          <DialogDescription className="text-sm text-slate-500">{lead.developer?.nama}</DialogDescription>
         </DialogHeader>
 
         <div className="grid sm:grid-cols-2 gap-3">
