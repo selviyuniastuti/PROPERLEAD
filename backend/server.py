@@ -657,6 +657,119 @@ async def manual_ingest(user: dict = Depends(get_current_user)):
 
 
 # ---------------------------------------------------------------------------
+# Daily digest (email + Telegram) — tiap pagi
+# ---------------------------------------------------------------------------
+async def run_daily_digest() -> dict:
+    all_leads = await db.leads.find().to_list(3000)
+    today = now_utc().date().isoformat()
+
+    def is_today(l):
+        return (l.get("tanggal_ditemukan") or "")[:10] == today
+
+    today_leads = [l for l in all_leads if is_today(l)]
+    baru = len(today_leads)
+    kkpr = sum(1 for l in today_leads if l.get("perizinan", {}).get("status") == "Terbit")
+    rdtr = sum(1 for l in today_leads if l.get("alert_type") == "rdtr_baru")
+    ubah = sum(1 for l in today_leads if l.get("alert_type") == "perubahan_status")
+    prioA = sum(1 for l in today_leads if l.get("prioritas") == "A")
+    top = sorted(today_leads, key=lambda l: l.get("score", 0), reverse=True)[:5]
+    tgl = now_utc().strftime("%d/%m/%Y")
+
+    def rows_txt(l):
+        return (f"• {l['developer']['nama']} — {l['proyek']['nama']} "
+                f"({l['proyek']['kabupaten_kota']}) | Skor {l.get('score',0)}/{l.get('prioritas','C')}")
+
+    tg_lines = [
+        "📋 <b>RINGKASAN HARIAN PROPERLEAD</b>",
+        f"Tanggal: {tgl}",
+        f"🆕 Lead baru: {baru}  |  🔵 KKPR terbit: {kkpr}",
+        f"🟢 RDTR baru: {rdtr}  |  🟠 Status berubah: {ubah}",
+        f"🔥 Prioritas A: {prioA}  |  Total lead: {len(all_leads)}",
+    ]
+    if top:
+        tg_lines.append("")
+        tg_lines.append("<b>Prioritas hari ini:</b>")
+        tg_lines += [rows_txt(l) for l in top]
+    else:
+        tg_lines.append("Tidak ada lead baru hari ini.")
+    tg_text = "\n".join(tg_lines)
+
+    def row_html(l):
+        prio_color = {"A": "#991B1B", "B": "#92400E", "C": "#334155"}.get(l.get("prioritas"), "#334155")
+        return (
+            f'<tr><td style="padding:6px 8px;border-bottom:1px solid #e2e8f0">{escape(l["developer"]["nama"])}</td>'
+            f'<td style="padding:6px 8px;border-bottom:1px solid #e2e8f0">{escape(l["proyek"]["nama"])}</td>'
+            f'<td style="padding:6px 8px;border-bottom:1px solid #e2e8f0">{escape(l["proyek"]["kabupaten_kota"])}</td>'
+            f'<td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-weight:bold;color:{prio_color}">{l.get("score",0)} / {l.get("prioritas","C")}</td></tr>'
+        )
+
+    table = "".join(row_html(l) for l in top) if top else (
+        '<tr><td colspan="4" style="padding:12px;text-align:center;color:#94a3b8">Tidak ada lead baru hari ini.</td></tr>'
+    )
+    chip = lambda label, val, bg, col: (
+        f'<td style="padding:6px"><div style="background:{bg};color:{col};border-radius:10px;padding:12px;text-align:center">'
+        f'<div style="font-size:22px;font-weight:800">{val}</div><div style="font-size:11px">{label}</div></div></td>'
+    )
+    subject = f"Ringkasan Harian PROPERLEAD — {tgl}"
+    html = (
+        f'<table role="presentation" width="100%" style="max-width:600px"><tr><td '
+        f'style="padding:24px;font-family:Arial,sans-serif;color:#0f172a">'
+        f'<h2 style="color:#065F46;margin:0 0 4px">PROPERLEAD</h2>'
+        f'<p style="color:#64748b;font-size:12px;margin:0 0 16px">Project &amp; Finance Intelligence</p>'
+        f'<p style="font-weight:bold;font-size:16px;margin:0 0 12px">Ringkasan Harian — {tgl}</p>'
+        f'<table width="100%" cellpadding="0" cellspacing="0"><tr>'
+        f'{chip("Lead Baru", baru, "#ECFDF5", "#065F46")}'
+        f'{chip("KKPR Terbit", kkpr, "#DBEAFE", "#1D4ED8")}'
+        f'{chip("RDTR Baru", rdtr, "#DCFCE7", "#15803D")}'
+        f'{chip("Status Berubah", ubah, "#FFEDD5", "#C2410C")}'
+        f'</tr></table>'
+        f'<p style="font-size:12px;color:#64748b;margin:8px 0 0">Prioritas A: <strong>{prioA}</strong> · Total lead: <strong>{len(all_leads)}</strong></p>'
+        f'<p style="font-weight:600;font-size:13px;margin:16px 0 6px">Prioritas hari ini:</p>'
+        f'<table width="100%" style="border:1px solid #e2e8f0;border-radius:8px;font-size:12px" cellpadding="0" cellspacing="0">'
+        f'<tr style="background:#0f172a;color:#fff;text-align:left">'
+        f'<th style="padding:8px">Developer</th><th style="padding:8px">Proyek</th>'
+        f'<th style="padding:8px">Wilayah</th><th style="padding:8px;text-align:center">Skor</th></tr>'
+        f'{table}</table>'
+        f'<p style="font-size:11px;color:#94a3b8;margin-top:16px">Dikirim oleh PROPERLEAD. '
+        f'Kami tidak pernah meminta password atau data kartu Anda melalui email.</p>'
+        f'</td></tr></table>'
+    )
+
+    users = await db.users.find({"active": True}).to_list(200)
+    emailed = []
+
+    async def _one(email):
+        try:
+            await send_email(to=email, subject=subject, html=html)
+            return email
+        except Exception as e:
+            logger.error(f"Digest email gagal ke {email}: {e}")
+            return None
+
+    for s in await asyncio.gather(*[_one(u["email"]) for u in users]):
+        if s:
+            emailed.append(s)
+    telegram_sent = await send_telegram(tg_text)
+    return {"emailed_to": emailed, "telegram_sent": telegram_sent, "stats": {
+        "lead_baru": baru, "kkpr_terbit": kkpr, "rdtr_baru": rdtr,
+        "status_berubah": ubah, "prioritas_a": prioA, "total": len(all_leads)}}
+
+
+@api_router.post("/cron/daily-digest")
+async def cron_daily_digest(background: BackgroundTasks, authorization: Optional[str] = Header(None)):
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    _check_cron_auth(authorization)
+    background.add_task(run_daily_digest)
+    return {"status": "accepted"}
+
+
+@api_router.post("/digest/run")
+async def manual_digest(user: dict = Depends(get_current_user)):
+    res = await run_daily_digest()
+    return {"status": "ok", **res}
+
+
+# ---------------------------------------------------------------------------
 # Dashboard stats
 # ---------------------------------------------------------------------------
 @api_router.get("/dashboard/stats")

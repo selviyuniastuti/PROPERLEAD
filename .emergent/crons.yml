@@ -6,3 +6,10 @@ crons:
     method: POST
     # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
     enabled: true
+  - name: daily-digest
+    description: "Kirim ringkasan harian lead baru & KKPR terbit ke email/Telegram tiap 07:30 WITA"
+    cron: "30 0 * * *"
+    endpoint: "{{BASE_URL}}/api/cron/daily-digest"
+    method: POST
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    enabled: true

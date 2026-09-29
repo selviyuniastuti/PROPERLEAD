@@ -29,6 +29,7 @@ CRM akuisisi lead perumahan untuk marketing bank. Sistem mendeteksi proyek/devel
 - Manajemen User (admin) + Pengaturan wilayah/jenis target (admin).
 - OSS Auto-Sync SIMULASI: cron `.emergent/crons.yml` (/api/cron/oss-ingest tiap 30 mnt) + manual /api/ingest/run menghasilkan lead OSS-style baru, memicu notifikasi in-app, email otomatis (A+target), dan Telegram.
 - Notifikasi Telegram (send_telegram) untuk setiap lead baru — aktif bila TELEGRAM_TOKEN & TELEGRAM_CHAT_ID diisi.
+- Ringkasan Harian: cron `daily-digest` (/api/cron/daily-digest, 07:30 WITA) mengirim rangkuman lead baru & KKPR terbit via email (semua user aktif) + Telegram; tombol uji manual /api/digest/run.
 - Tested: iteration_1 (24/24) + iteration_2 (auto-email & peta) lulus.
 
 ## Backlog
