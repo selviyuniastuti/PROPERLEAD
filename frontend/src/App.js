@@ -10,6 +10,7 @@ import CRMBoard from "@/pages/CRMBoard";
 import NotificationsPage from "@/pages/NotificationsPage";
 import UsersPage from "@/pages/UsersPage";
 import SettingsPage from "@/pages/SettingsPage";
+import MapPage from "@/pages/MapPage";
 
 function Protected({ children, adminOnly }) {
   const { user, isAdmin } = useAuth();
@@ -41,6 +42,7 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/leads" element={<LeadsPage />} />
               <Route path="/crm" element={<CRMBoard />} />
+              <Route path="/peta" element={<MapPage />} />
               <Route path="/notifikasi" element={<NotificationsPage />} />
               <Route
                 path="/users"

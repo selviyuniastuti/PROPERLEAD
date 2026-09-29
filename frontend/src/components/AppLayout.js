@@ -10,6 +10,7 @@ import {
   LogOut,
   Menu,
   X,
+  MapPinned,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Wordmark, BrandMark } from "@/components/Brand";
@@ -24,6 +25,7 @@ const NAV = [
   { to: "/", label: "Ringkasan", icon: LayoutDashboard, testid: "nav-dashboard" },
   { to: "/leads", label: "Daftar Lead", icon: ListChecks, testid: "nav-leads" },
   { to: "/crm", label: "Pipeline CRM", icon: KanbanSquare, testid: "nav-crm" },
+  { to: "/peta", label: "Peta Proyek", icon: MapPinned, testid: "nav-peta" },
   { to: "/notifikasi", label: "Notifikasi & Alert", icon: Bell, testid: "nav-notifikasi" },
 ];
 const ADMIN_NAV = [

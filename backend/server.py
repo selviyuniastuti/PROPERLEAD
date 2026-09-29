@@ -413,7 +413,10 @@ async def create_lead(body: LeadCreateReq, user: dict = Depends(get_current_user
     lead.update(scoring)
     await db.leads.insert_one(dict(lead))
     await create_notification(lead)
-    return serialize_lead(lead)
+    emailed = await notify_new_lead_email(lead)
+    result = serialize_lead(lead)
+    result["auto_emailed_to"] = emailed
+    return result
 
 
 @api_router.put("/leads/{lead_id}/crm")
@@ -449,15 +452,11 @@ async def add_followup(lead_id: str, body: FollowUpReq, user: dict = Depends(get
     return serialize_lead(lead)
 
 
-@api_router.post("/leads/{lead_id}/send-alert")
-async def send_lead_alert(lead_id: str, user: dict = Depends(get_current_user)):
-    lead = await db.leads.find_one({"id": lead_id})
-    if not lead:
-        raise HTTPException(status_code=404, detail="Lead tidak ditemukan")
-    subject = f"🔔 LEAD PERUMAHAN BARU — {lead['developer']['nama']}"
+def build_lead_alert_email(lead: dict):
     dev = lead["developer"]
     proyek = lead["proyek"]
     perizinan = lead["perizinan"]
+    subject = f"🔔 LEAD PERUMAHAN BARU — {dev['nama']}"
     html = (
         f'<table role="presentation" width="100%" style="max-width:560px"><tr><td '
         f'style="padding:24px;font-family:Arial,sans-serif;color:#0f172a">'
@@ -476,6 +475,39 @@ async def send_lead_alert(lead_id: str, user: dict = Depends(get_current_user)):
         f'Kami tidak pernah meminta password atau data kartu Anda melalui email.</p>'
         f'</td></tr></table>'
     )
+    return subject, html
+
+
+async def notify_new_lead_email(lead: dict):
+    """Auto email untuk lead Prioritas A di wilayah target → super admin + marketing wilayah tsb."""
+    if lead.get("prioritas") != "A" or not lead.get("lokasi_target"):
+        return []
+    region = lead.get("proyek", {}).get("kabupaten_kota")
+    recipients = await db.users.find(
+        {"active": True, "$or": [{"role": "super_admin"}, {"regions": region}]}
+    ).to_list(200)
+    if not recipients:
+        return []
+    subject, html = build_lead_alert_email(lead)
+
+    async def _one(email):
+        try:
+            await send_email(to=email, subject=subject, html=html)
+            return email
+        except Exception as e:
+            logger.error(f"Auto-notify gagal ke {email}: {e}")
+            return None
+
+    sent = await asyncio.gather(*[_one(u["email"]) for u in recipients])
+    return [s for s in sent if s]
+
+
+@api_router.post("/leads/{lead_id}/send-alert")
+async def send_lead_alert(lead_id: str, user: dict = Depends(get_current_user)):
+    lead = await db.leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead tidak ditemukan")
+    subject, html = build_lead_alert_email(lead)
     email_id = await send_email(to=user["email"], subject=subject, html=html)
     return {"status": "sent", "email_id": email_id, "to": user["email"]}
 
