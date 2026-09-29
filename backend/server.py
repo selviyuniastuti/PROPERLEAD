@@ -11,11 +11,13 @@ import bcrypt
 import jwt
 import httpx
 import asyncio
+import random
+import hmac
 from datetime import datetime, timezone, timedelta, date
 from typing import List, Optional, Literal
 from html import escape
 
-from fastapi import FastAPI, APIRouter, Request, Response, HTTPException, Depends, Query
+from fastapi import FastAPI, APIRouter, Request, Response, HTTPException, Depends, Query, BackgroundTasks, Header
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
@@ -414,6 +416,7 @@ async def create_lead(body: LeadCreateReq, user: dict = Depends(get_current_user
     await db.leads.insert_one(dict(lead))
     await create_notification(lead)
     emailed = await notify_new_lead_email(lead)
+    await notify_telegram_lead(lead)
     result = serialize_lead(lead)
     result["auto_emailed_to"] = emailed
     return result
@@ -510,6 +513,147 @@ async def send_lead_alert(lead_id: str, user: dict = Depends(get_current_user)):
     subject, html = build_lead_alert_email(lead)
     email_id = await send_email(to=user["email"], subject=subject, html=html)
     return {"status": "sent", "email_id": email_id, "to": user["email"]}
+
+
+# ---------------------------------------------------------------------------
+# Telegram notifications
+# ---------------------------------------------------------------------------
+async def send_telegram(text: str) -> bool:
+    token = os.environ.get("TELEGRAM_TOKEN")
+    chat = os.environ.get("TELEGRAM_CHAT_ID")
+    if not token or not chat:
+        return False
+    try:
+        async with httpx.AsyncClient(timeout=15) as c:
+            r = await c.post(
+                f"https://api.telegram.org/bot{token}/sendMessage",
+                json={"chat_id": chat, "text": text, "parse_mode": "HTML",
+                      "disable_web_page_preview": True},
+            )
+        r.raise_for_status()
+        return True
+    except Exception as e:
+        logger.error(f"Telegram gagal: {e}")
+        return False
+
+
+async def notify_telegram_lead(lead: dict) -> bool:
+    labels = {"rdtr_baru": "🟢 RDTR Baru", "kkpr_terbit": "🔵 KKPR/PKKPR Terbit",
+              "perubahan_status": "🟠 Perubahan Status"}
+    milestone = labels.get(lead.get("alert_type"), "Lead")
+    text = (
+        "🔔 <b>LEAD PERUMAHAN BARU</b>\n"
+        f"Developer: {lead['developer']['nama']}\n"
+        f"Proyek: {lead['proyek']['nama']}\n"
+        f"Lokasi: {lead['proyek']['kabupaten_kota']}\n"
+        f"Kegiatan: {lead['proyek']['jenis']}\n"
+        f"Milestone: {milestone}\n"
+        f"Perizinan: {lead['perizinan']['jenis_kkpr']} — {lead['perizinan']['status']}\n"
+        f"Skor: {lead['score']} (Prioritas {lead['prioritas']})\n"
+        f"Sumber: {lead['sumber']}"
+    )
+    return await send_telegram(text)
+
+
+# ---------------------------------------------------------------------------
+# OSS auto-sync (SIMULATED ingest — replace with real OSS/GISTARU API later)
+# ---------------------------------------------------------------------------
+OSS_DEV_POOL = [
+    {"nama": "PT Meratus Griya Persada", "nib": "9120011122233", "tag": "Meratus"},
+    {"nama": "PT Borneo Land Sejahtera", "nib": "9120044455566", "tag": "Borneo"},
+    {"nama": "PT Kalimantan Habitat Utama", "nib": "9120077788899", "tag": "Habitat"},
+    {"nama": "CV Amanah Property Banua", "nib": "", "tag": "Amanah"},
+    {"nama": "PT Intan Permata Residence", "nib": "9120022233344", "tag": "Permata"},
+    {"nama": "PT Banua Mega Konstruksi", "nib": "9120055566677", "tag": "Mega"},
+    {"nama": "PT Sungai Martapura Land", "nib": "9120088899900", "tag": "Martapura"},
+    {"nama": "CV Rahmat Bumi Selatan", "nib": "", "tag": "Rahmat"},
+]
+OSS_PROJECT_WORDS = ["Perumahan", "Cluster", "Grand", "Taman", "Green", "Bumi", "Griya"]
+REGION_COORDS = {
+    "Banjarmasin": (-3.3186, 114.5944),
+    "Banjarbaru": (-3.4426, 114.8331),
+    "Kabupaten Banjar": (-3.4113, 114.8419),
+    "Tanah Laut": (-3.7997, 114.7842),
+    "Barito Kuala": (-3.0025, 114.7594),
+    "Tapin": (-2.9276, 115.1509),
+}
+
+
+async def generate_and_store_lead(source: str = "OSS (Auto-Sync)"):
+    settings = await get_settings_doc()
+    all_regions = [r["name"] for r in settings["regions"]]
+    target_regions = [r["name"] for r in settings["regions"] if r.get("target")]
+    enabled_types = [t["name"] for t in settings["project_types"] if t.get("enabled")] or ["Perumahan"]
+
+    region = random.choice((target_regions or all_regions) + all_regions)
+    jenis = random.choice(enabled_types)
+    dev = random.choice(OSS_DEV_POOL)
+    status = random.choices(["Terbit", "Proses", "Belum"], weights=[6, 3, 1])[0]
+    alert = "kkpr_terbit" if status == "Terbit" else random.choice(["perubahan_status", "rdtr_baru"])
+    lat, lng = REGION_COORDS.get(region, (-3.4, 114.8))
+    coord = f"{round(lat + random.uniform(-0.05, 0.05), 4)}, {round(lng + random.uniform(-0.05, 0.05), 4)}"
+    has_rdtr = random.random() < 0.7
+
+    lead = {
+        "id": str(uuid.uuid4()),
+        "developer": {"nama": dev["nama"], "nib": dev.get("nib", ""), "alamat": region, "kontak": ""},
+        "proyek": {
+            "nama": f"{random.choice(OSS_PROJECT_WORDS)} {dev['tag']} {random.choice(['Asri','Regency','Permai','Indah','City'])}",
+            "jenis": jenis, "lokasi": region, "kabupaten_kota": region, "kecamatan": "",
+            "luas_ha": round(random.uniform(1.0, 12.0), 1), "koordinat": coord,
+        },
+        "tata_ruang": {
+            "rdtr": f"RDTR {region} 2024" if has_rdtr else None,
+            "zona": "Zona Perumahan (R-3)" if has_rdtr else None,
+            "ketentuan_zonasi": "KDB 60%, KLB 1.2" if has_rdtr else None,
+        },
+        "perizinan": {
+            "jenis_kkpr": random.choice(["KKPR", "PKKPR"]), "status": status,
+            "tanggal_terbit": now_utc().date().isoformat() if status == "Terbit" else None,
+            "nomor_dokumen": f"{random.choice(['KKPR','PKKPR'])}/{random.randint(1000,9999)}/2026" if status == "Terbit" else None,
+        },
+        "sumber": source, "confidence": random.randint(55, 95), "alert_type": alert,
+        "lokasi_target": region in target_regions,
+        "crm_status": "NEW", "tanggal_ditemukan": now_utc().isoformat(),
+        "created_by": "auto-sync", "aktivitas": [],
+    }
+    lead.update(compute_score(lead))
+    await db.leads.insert_one(dict(lead))
+    await create_notification(lead)
+    emailed = await notify_new_lead_email(lead)
+    await notify_telegram_lead(lead)
+    return lead, emailed
+
+
+async def _ingest_batch(n: int):
+    for _ in range(n):
+        try:
+            await generate_and_store_lead()
+        except Exception as e:
+            logger.error(f"Ingest error: {e}")
+
+
+def _check_cron_auth(authorization: Optional[str]):
+    secret = os.environ.get("WEBHOOK_CRON_SECRET", "")
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="unauthorized")
+    token = authorization[7:]
+    if not secret or not hmac.compare_digest(token, secret):
+        raise HTTPException(status_code=401, detail="unauthorized")
+
+
+@api_router.post("/cron/oss-ingest")
+async def cron_oss_ingest(background: BackgroundTasks, authorization: Optional[str] = Header(None)):
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    _check_cron_auth(authorization)
+    background.add_task(_ingest_batch, random.randint(1, 2))
+    return {"status": "accepted"}
+
+
+@api_router.post("/ingest/run")
+async def manual_ingest(user: dict = Depends(get_current_user)):
+    lead, emailed = await generate_and_store_lead(source="OSS (Manual Sync)")
+    return {"status": "ok", "lead": serialize_lead(lead), "auto_emailed_to": emailed}
 
 
 # ---------------------------------------------------------------------------

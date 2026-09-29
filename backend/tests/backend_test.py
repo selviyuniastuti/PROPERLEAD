@@ -257,6 +257,71 @@ class TestSettings:
         assert r.status_code == 200
 
 
+# ---------- Auto-email on new lead (Prioritas A + target region) ----------
+class TestAutoEmail:
+    def test_priority_A_target_region_auto_emails(self, admin_session):
+        s, _ = admin_session
+        payload = {
+            "developer": {"nama": "TEST_AutoEmail Dev A", "nib": "1234567", "alamat": "Banjarbaru"},
+            "proyek": {"nama": "TEST AutoEmail Perumahan A", "jenis": "Perumahan",
+                       "kabupaten_kota": "Banjarbaru", "kecamatan": "X", "luas_ha": 2.0,
+                       "koordinat": "-3.44, 114.83"},
+            "tata_ruang": {"rdtr": "RDTR X"},
+            "perizinan": {"jenis_kkpr": "PKKPR", "status": "Terbit",
+                          "tanggal_terbit": "2026-01-05", "nomor_dokumen": "TA/1"},
+            "sumber": "OSS", "confidence": 90, "alert_type": "kkpr_terbit",
+        }
+        r = s.post(f"{API}/leads", json=payload, timeout=60)
+        assert r.status_code == 200, r.text
+        lead = r.json()
+        assert lead["prioritas"] == "A"
+        assert lead["score"] == 100
+        assert "auto_emailed_to" in lead
+        emailed = lead["auto_emailed_to"]
+        assert isinstance(emailed, list)
+        assert len(emailed) >= 1, f"expected at least 1 recipient, got {emailed}"
+        assert ADMIN_EMAIL in emailed, f"super_admin should be notified, got {emailed}"
+        # NOTE: marketing@properlead.id is blocked by Resend as undeliverable in test env.
+        # Backend correctly attempts to send (see logs) — only successful sends are returned.
+
+    def test_priority_C_no_auto_email(self, admin_session):
+        s, _ = admin_session
+        payload = {
+            "developer": {"nama": "TEST_LowPrio Dev", "nib": "", "alamat": ""},
+            "proyek": {"nama": "TEST LowPrio Komersial", "jenis": "Komersial",
+                       "kabupaten_kota": "Barito Kuala"},
+            "tata_ruang": {},
+            "perizinan": {"jenis_kkpr": "KKPR", "status": "Proses"},
+            "sumber": "OSS", "confidence": 40, "alert_type": "perubahan_status",
+        }
+        r = s.post(f"{API}/leads", json=payload, timeout=30)
+        assert r.status_code == 200, r.text
+        lead = r.json()
+        assert lead["prioritas"] in ("B", "C")
+        assert lead.get("auto_emailed_to") == []
+
+    def test_priority_A_nontarget_region_no_auto_email(self, admin_session):
+        s, _ = admin_session
+        # Tapin is not a target region in default settings
+        payload = {
+            "developer": {"nama": "TEST_Tapin Dev", "nib": "555", "alamat": "Rantau"},
+            "proyek": {"nama": "TEST Tapin Perumahan", "jenis": "Perumahan",
+                       "kabupaten_kota": "Tapin"},
+            "tata_ruang": {"rdtr": "RDTR Tapin"},
+            "perizinan": {"jenis_kkpr": "KKPR", "status": "Terbit",
+                          "tanggal_terbit": "2026-01-06", "nomor_dokumen": "TT/1"},
+            "sumber": "OSS", "confidence": 80, "alert_type": "kkpr_terbit",
+        }
+        r = s.post(f"{API}/leads", json=payload, timeout=30)
+        assert r.status_code == 200, r.text
+        lead = r.json()
+        # not a target region so lokasi_target is False → score 85 without +15 = 85
+        assert lead["lokasi_target"] is False
+        # still could be A if score>=80 (40+20+15dev+10rdtr = 85)
+        # but auto_emailed_to must be empty because not target region
+        assert lead.get("auto_emailed_to") == []
+
+
 # ---------- Email alert (real integration) ----------
 class TestEmail:
     def test_send_alert(self, admin_session):

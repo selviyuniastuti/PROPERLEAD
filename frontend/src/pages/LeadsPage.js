@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, Plus, Filter } from "lucide-react";
+import { Search, Plus, Filter, RefreshCw } from "lucide-react";
 import api, { apiErr } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,20 @@ export default function LeadsPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const runSync = async () => {
+    setSyncing(true);
+    try {
+      const { data } = await api.post("/ingest/run");
+      toast.success(`Lead OSS baru terdeteksi: ${data.lead.developer.nama}`);
+      load();
+    } catch (e) {
+      toast.error(apiErr(e));
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const load = useCallback(async () => {
     const q = {};
@@ -124,13 +138,24 @@ export default function LeadsPage() {
           </h1>
           <p className="text-sm text-slate-500 mt-1">{leads.length} lead ditemukan</p>
         </div>
-        <Button
-          onClick={() => setAddOpen(true)}
-          className="bg-[#065F46] hover:bg-[#044E38]"
-          data-testid="add-lead-btn"
-        >
-          <Plus className="h-4 w-4 mr-2" /> Tambah Lead
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={runSync}
+            disabled={syncing}
+            className="border-[#065F46] text-[#065F46] hover:bg-[#ECFDF5]"
+            data-testid="sync-oss-btn"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? "animate-spin" : ""}`} /> Sync OSS
+          </Button>
+          <Button
+            onClick={() => setAddOpen(true)}
+            className="bg-[#065F46] hover:bg-[#044E38]"
+            data-testid="add-lead-btn"
+          >
+            <Plus className="h-4 w-4 mr-2" /> Tambah Lead
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}

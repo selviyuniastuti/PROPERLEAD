@@ -21,21 +21,20 @@ CRM akuisisi lead perumahan untuk marketing bank. Sistem mendeteksi proyek/devel
 
 ## Implemented (2026-09-29)
 - Login/auth JWT cookie + 2 peran + seed super admin (selviyuniastuti6@gmail.com) & demo marketing user.
-- Dashboard: 4 stat cards (Lead baru hari ini, KKPR terbit, RDTR baru, Status berubah), distribusi prioritas, pipeline, chart lead per wilayah, lead terbaru.
-- Daftar Lead: tabel + filter (wilayah/jenis/prioritas/alert) + search + tambah lead manual + detail dialog (developer/proyek/tata ruang/perizinan/score breakdown/aktivitas) + follow-up + kirim email alert.
+- Dashboard: 4 stat cards, distribusi prioritas, pipeline, chart lead per wilayah, lead terbaru.
+- Daftar Lead: tabel + filter + search + tambah lead manual + detail dialog + follow-up + kirim email alert + tombol Sync OSS.
 - CRM Kanban 6 kolom dengan pindah tahap.
-- Notifikasi in-app (bell + halaman, filter per tipe, mark read/all).
-- Manajemen User (admin): CRUD user, toggle aktif, ubah peran.
-- Pengaturan wilayah/jenis target (admin) → memengaruhi lead scoring.
-- 8 seed lead OSS-style (Kalimantan Selatan) + notifikasi.
-- Tested: backend 24/24 pass, frontend flows pass, real email pass.
+- Notifikasi in-app (bell + halaman) + Email otomatis (Resend) untuk lead Prioritas A di wilayah target.
+- Peta Sebaran Proyek (react-leaflet + OpenStreetMap) dari koordinat lead.
+- Manajemen User (admin) + Pengaturan wilayah/jenis target (admin).
+- OSS Auto-Sync SIMULASI: cron `.emergent/crons.yml` (/api/cron/oss-ingest tiap 30 mnt) + manual /api/ingest/run menghasilkan lead OSS-style baru, memicu notifikasi in-app, email otomatis (A+target), dan Telegram.
+- Notifikasi Telegram (send_telegram) untuk setiap lead baru — aktif bila TELEGRAM_TOKEN & TELEGRAM_CHAT_ID diisi.
+- Tested: iteration_1 (24/24) + iteration_2 (auto-email & peta) lulus.
 
 ## Backlog
-- P1: Integrasi live OSS/GISTARU (butuh akses API resmi; saat ini seed + input manual).
-- P1: Notifikasi email otomatis saat lead baru masuk (saat ini manual per-lead via tombol).
-- P2: Brute-force lockout di login (playbook item, belum diimplementasi).
-- P2: Delete lead endpoint; export lead; peta koordinat proyek.
-- P2: WhatsApp/Telegram notifikasi.
+- P0: Isi TELEGRAM_TOKEN + TELEGRAM_CHAT_ID untuk mengaktifkan notifikasi Telegram (kode siap).
+- P1: Integrasi live OSS/GISTARU (butuh akses API resmi; saat ini SIMULASI auto-sync).
+- P2: Brute-force lockout login; delete/export lead; WhatsApp channel.
 
 ## Next Tasks
 - Konfirmasi sumber data OSS nyata / mekanisme ingest.

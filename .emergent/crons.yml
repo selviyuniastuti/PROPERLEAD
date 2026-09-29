@@ -1,0 +1,8 @@
+crons:
+  - name: oss-auto-sync
+    description: "Simulasi ingest OSS: deteksi lead perumahan baru setiap 30 menit"
+    cron: "*/30 * * * *"
+    endpoint: "{{BASE_URL}}/api/cron/oss-ingest"
+    method: POST
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    enabled: true
